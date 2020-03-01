@@ -226,25 +226,6 @@ async def on_message(message):
                         embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
                         await message.channel.send(embed = embed)
 
-                elif content.startswith("메시지삭제"):
-                    if message.channel.type == discord.ChannelType.private:
-                        embed = discord.Embed(title = "DM에서는 메시지 삭제 기능 이용이 불가능합니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
-                        embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
-                        embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
-                        await message.channel.send(embed = embed)
-                    elif message.channel.permissions_for(message.guild.get_member(682801427260768313)).manage_messages and message.channel.permissions_for(message.guild.get_member(message.author.id)).manage_messages:
-                        def is_me(m):
-                            return True
-                        deleted = await message.channel.purge(limit = int(content[6:]) + 1, check = is_me)
-                        embed = discord.Embed(title = str(len(deleted) - 1) + "개의 메시지를 삭제하였습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
-                        embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
-                        embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
-                        await message.channel.send(embed = embed)
-                    else:
-                        embed = discord.Embed(title = "봇에게 메시지 삭제 권한이 없습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
-                        embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
-                        embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
-                        await message.channel.send(embed = embed)
                 elif content.startswith("음성채널 들어와"):
                     for vs in message.guild.voice_channels:
                         if message.author in vs.members:
@@ -257,20 +238,95 @@ async def on_message(message):
                     embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
                     await message.channel.send(embed = embed)
 
-                elif content.startswith("음성채널 나가"):
-                    global insinvoid
-                    if isinvoid == 0:
-                        embed = discord.Embed(title = "들어가있는 음성채널이 없습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                #메세지관리
+                elif content.startswith("메시지삭제"):
+                    if message.channel.type == discord.ChannelType.private:
+                        embed = discord.Embed(title = "DM에서는 메시지 삭제 기능 이용이 불가능합니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
                         embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
                         embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
                         await message.channel.send(embed = embed)
+                    elif message.channel.permissions_for(message.guild.get_member(682801427260768313)).manage_messages:
+                        if content[6:].isdecimal():
+                            if int(content[6:]) > 0:
+                                def is_me(m):
+                                    return True
+                                deleted = await message.channel.purge(limit = int(content[6:]) + 1, check = is_me)
+                                embed = discord.Embed(title = str(len(deleted) - 1) + "개의 메시지를 삭제하였습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                                embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                                embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                                await message.channel.send(embed = embed)
+                            else:
+                                embed = discord.Embed(title = "삭제할 메세지의 수를 자연수로 해주세요.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                                embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                                embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                                await message.channel.send(embed = embed)
+                        else:
+                            embed = discord.Embed(title = "삭제할 메세지의 수를 자연수로 해주세요.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                            embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                            embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                            await message.channel.send(embed = embed)
                     else:
-                        await isinvoid.disconnect()
-                        isinvoid = 0
-                        embed = discord.Embed(title = "음성채널에서 나갔습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                        embed = discord.Embed(title = "봇에게 메시지 삭제 권한이 없습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
                         embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
                         embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
                         await message.channel.send(embed = embed)
+
+                #채널관리
+                elif content.startswith("채널삭제"):
+                    if message.channel.permissions_for(message.guild.get_member(682801427260768313)).manage_channels:
+                        await message.channel.delete()
+                    else:
+                        await message.channel.send("권한이 없어 ㅅㅂ")
+
+                #유저관리
+                elif content.startswith("강퇴"):
+                    if message.channel.permissions_for(message.guild.get_member(682801427260768313)).kick_members:
+                        if len(message.mentions) == 1:
+                            await message.guild.kick(message.mentions[0])
+                            embed = discord.Embed(title = message.mentions[0].name + "(이)가 강퇴되었습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                            embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                            embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                            await message.channel.send(embed = embed)
+                        else:
+                            embed = discord.Embed(title = "멘션을 한번 해주세요.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                            embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                            embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                            await message.channel.send(embed = embed)
+                    else:
+                        await message.channel.send("권한이 없어요")
+
+                elif content.startswith("밴"):
+                    if message.channel.permissions_for(message.guild.get_member(682801427260768313)).ban_members:
+                        if len(message.mentions) == 1:
+                            await message.guild.ban(message.mentions[0])
+                            embed = discord.Embed(title = message.mentions[0].name + "(이)가 밴되었습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                            embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                            embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                            await message.channel.send(embed = embed)
+                        else:
+                            embed = discord.Embed(title = "멘션을 한번 해주세요.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                            embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                            embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                            await message.channel.send(embed = embed)
+                    else:
+                        await message.channel.send("권한이 없어요")
+
+                elif content.startswith("밴해제"):
+                    if message.channel.permissions_for(message.guild.get_member(682801427260768313)).ban_members:
+                        if len(message.mentions) == 1:
+                            await message.guild.unban(message.mentions[0])
+                            embed = discord.Embed(title = message.mentions[0].name + "(이)가 밴 해제되었습니다.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                            embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                            embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                            await message.channel.send(embed = embed)
+                        else:
+                            embed = discord.Embed(title = "멘션을 한번 해주세요.", color = 0x9966ff, timestamp = datetime.datetime.utcnow())
+                            embed.set_footer(text = "제노봇", icon_url = 'https://cdn.discordapp.com/avatars/682801427260768313/7b26360613f9844ccac4e1191210e107.png')
+                            embed.set_author(name = message.author.display_name, icon_url = message.author.avatar_url)
+                            await message.channel.send(embed = embed)
+                    else:
+                        await message.channel.send("권한이 없어요")
+
 
 
             else:
@@ -289,12 +345,9 @@ def checkRegistered(id):
     return 0
 
 def register(name, id):
-    a = open('UserList.txt', 'r')
-    User = a.read()
-    a.close()
+    User = open('UserList.txt', 'r').read()
     b = open('UserList.txt', 'w')
     b.write(User + '\n' + str(id) + ' ' + name + ' 0')
-    b.close()
     print("`" + app.get_user(id).name + "`(이)가 가입했습니다.")
 
 def changeNick(id, name):
