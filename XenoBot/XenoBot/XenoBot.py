@@ -3,6 +3,8 @@ import datetime
 import asyncio
 import time
 import random
+import urllib.request
+ 
 
 app = discord.Client()
 token = open('C://Users//이정형//Documents//Xenotoken.txt', 'r').read()
@@ -11,7 +13,7 @@ information_commands = """
 `ㅈ!내정보`, `ㅈ!서버정보`
 """
 game_commands = """
-`ㅈ!주사위`
+`ㅈ!주사위`, `ㅈ!가위바위보`
 """
 
 @app.event
@@ -30,9 +32,9 @@ async def on_message(message):
 
     if cont == "ㅈ!도움":
         embed = embedgen("도움말", "모든 명령어는 서버에서만 가능합니다.")
-        embed.add_field(name = ":smiling_face_with_3_hearts: 봇 초대하기", value = "[[ 봇 데려가기 ]](https://discordapp.com/api/oauth2/authorize?client_id=682801427260768313&permissions=8&scope=bot)")
-        embed.add_field(name = ":information_source: 정보 명령어", value = information_commands)
-        embed.add_field(name = ":video_game: 게임 명령어", value = game_commands)
+        embed.add_field(name = ":smiling_face_with_3_hearts: 봇 초대하기", value = "[[ 봇 데려가기 ]](https://discordapp.com/api/oauth2/authorize?client_id=682801427260768313&permissions=8&scope=bot)", inline = False)
+        embed.add_field(name = ":information_source: 정보 명령어", value = information_commands, inline = False)
+        embed.add_field(name = ":video_game: 게임 명령어", value = game_commands, inline = False)
         await chan.send(embed = embed)
         return
 
@@ -89,7 +91,38 @@ async def on_message(message):
         await chan.send(embed = embed)
 
     elif cont == "ㅈ!주사위":
-        await chan.send(embed = embedgen(str(random.randint(1, 6))+"(이)가 나왔습니다.", ""))
+        embed = embedgen("주사위를 굴리는 중...", "2초가 소요됩니다.")
+        embed.set_image(url = "https://playentry.org/uploads/discuss/6m/i7/image/6mi7l2vak89sys2b000x2a3ce22ku3mr.gif")
+        a = await chan.send(embed = embed)
+        output = random.randint(0, 5)
+        time.sleep(2)
+        embed = embedgen(str(output + 1) + "(이)가 나왔습니다.", "")
+        urls = ["https://playentry.org/uploads/discuss/qu/ns/image/qunsrb6kk89sys4i000x2a3ce23wc31l.png", "https://playentry.org/uploads/discuss/nj/95/image/nj95xvufk89sys46000x2a3ce23ovow9.png",\
+                "https://playentry.org/uploads/discuss/ai/ql/image/aiqlwx1jk89sys3u000x2a3ce23hm4z6.png", "https://playentry.org/uploads/discuss/qv/o4/image/qvo4omd8k89sys3h000x2a3ce23ab3jc.png",\
+                "https://playentry.org/uploads/discuss/12/yj/image/12yjx144k89sys32000x2a3ce2311z7z.png", "https://playentry.org/uploads/discuss/u5/yh/image/u5yh4p7wk89sys2o000x2a3ce22sxeif.png"]
+        embed.set_image(url = urls[output])
+        await a.edit(embed = embed)
+
+    elif cont == "ㅈ!가위바위보":
+        embed = embedgen("반응을 눌러보세요", "5초간 안 누를 시 게임이 종료됩니다")
+        a = await chan.send(embed = embed)
+        await a.add_reaction('✌️')
+        await a.add_reaction('🖐️')
+        await a.add_reaction('✊')
+        b = ''
+        def check(reaction, user):
+            global b 
+            b = str(reaction.emoji)
+            return user == message.author and (str(reaction.emoji) == '✌️' or str(reaction.emoji) == '🖐️' or str(reaction.emoji) == '✊')
+        try:
+            reaction, user = await app.wait_for('reaction_add', timeout=5, check=check)
+        except asyncio.TimeoutError:
+            embed = embedgen("당신은 졌습니다", "기권승")
+            await chan.send(embed = embed)
+        else:
+            win = {'✌️':':fist:','🖐️':':v:','✊':':hand_splayed:'}
+            embed = embedgen("당신은 졌습니다", "봇이 낸 건 " + win[b] + "입니다!")
+            await chan.send(embed = embed)
 
 def embedgen(title, desc):
     embed = discord.Embed(title = title, description = desc, timestamp = datetime.datetime.utcnow())
