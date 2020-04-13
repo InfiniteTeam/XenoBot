@@ -9,17 +9,21 @@ basedict = json.load(open('dict.json', 'r', encoding = 'utf-8'))
 async def on_ready():
     print("Login Successful")
     game = discord.Game("ㅈ!도움, %d서버, %d유저"%(len(app.guilds), len(app.users)))
+    basedict["usingxenotool"].clear()
+    savejson()
     await app.change_presence(status = discord.Status.online, activity = game)
 #############################
 @app.event
 async def on_message(msg):
     cont, chan, auth = msg.content, msg.channel, msg.author
     #======!(----------------------[ ㄴ('o')ㄱ ]----------------------)!======#
+    if chan.id in basedict["usingxenotool"]:
+        return
+    if auth.id == 682801427260768313:
+        return
     if msg.channel.type == discord.ChannelType.group or msg.channel.type == discord.ChannelType.private:
         await chan.send(embed = get_error(5, auth))
         await chan.send(embed = get_embed("봇 데려가기", "[[여기를 누르세요]](https://discordapp.com/api/oauth2/authorize?client_id=682801427260768313&permissions=8&scope=bot)"))
-        return
-    if auth.id == 682801427260768313:
         return
     #======!(----------------------[ ㄴ('o')ㄱ ]----------------------)!======#
     if cont in basedict["custom"]:
@@ -94,17 +98,67 @@ async def on_message(msg):
             await chan.send(embed = embed)
     #======!(----------------------[ ㄴ('o')ㄱ ]----------------------)!======#
     if cont.startswith("ㅈ!제노툴"):
+        def finishtool():
+            basedict["usingxenotool"].remove(chan.id)
+            savejson()
+        basedict["usingxenotool"].append(chan.id)
+        savejson()
         complete = ""
         embed = get_embed("완성된 코드", "```py\n" + complete + "```")
         completed = await chan.send(embed = embed)
-        main = await chan.send(embed = get_embed("단계 1", "명령어를 입력하세요."))
-        def check(m):
-            return m.author == auth and m.channel == chan
-        inputs = await app.wait_for('message', check = check)
-        complete += "if message.content==\"" + inputs.content.replace("\\", "\\\\").replace("\"", "\\\"") + "\":\n"
-        await completed.edit(embed = get_embed("완성된 코드", "```py\n" + complete + "```"))
-        await inputs.delete()
-        eventcnt = 0
+        main = await chan.send(embed = get_embed("단계 1", "시작 트리거를 골라주세요.\n:one: 특정 단어\n:two: 특정 단어로 시작\n:three: 특정 단어로 끝남\n:four: 특정 단어를 포함"))
+        await main.add_reaction('1️⃣')
+        await main.add_reaction('2️⃣')
+        await main.add_reaction('3️⃣')
+        await main.add_reaction('4️⃣')
+        def check(reaction, user):
+            return user == auth
+        try:
+            reaction, user = await app.wait_for('reaction_add', timeout = 30.0, check = check)
+        except asyncio.TimeoutError:
+            await start.delete()
+            finishtool()
+            return
+        # @(^o^)==@ @==(^o^)@
+        else:
+            savejson()
+            if str(reaction.emoji) == '1️⃣':
+                await main.clear_reactions()
+                await main.edit(embed = get_embed("단계 1-1", "명령어를 입력하세요."))
+                def check(m):
+                    return m.author == auth and m.channel == chan
+                inputs = await app.wait_for('message', check = check)
+                complete += "if message.content==\"" + inputs.content.replace("\\", "\\\\").replace("\"", "\\\"") + "\":\n"
+                await completed.edit(embed = get_embed("완성된 코드", "```py\n" + complete + "```"))
+                await inputs.delete()
+            if str(reaction.emoji) == '2️⃣':
+                await main.clear_reactions()
+                await main.edit(embed = get_embed("단계 1-1", "명령어의 시작 부분을 입력하세요."))
+                def check(m):
+                    return m.author == auth and m.channel == chan
+                inputs = await app.wait_for('message', check = check)
+                complete += "if message.content.startswith(\"" + inputs.content.replace("\\", "\\\\").replace("\"", "\\\"") + "\"):\n"
+                await completed.edit(embed = get_embed("완성된 코드", "```py\n" + complete + "```"))
+                await inputs.delete()
+            if str(reaction.emoji) == '3️⃣':
+                await main.clear_reactions()
+                await main.edit(embed = get_embed("단계 1-1", "명령어의 끝 부분을 입력하세요."))
+                def check(m):
+                    return m.author == auth and m.channel == chan
+                inputs = await app.wait_for('message', check = check)
+                complete += "if message.content.endswith(\"" + inputs.content.replace("\\", "\\\\").replace("\"", "\\\"") + "\"):\n"
+                await completed.edit(embed = get_embed("완성된 코드", "```py\n" + complete + "```"))
+                await inputs.delete()
+            if str(reaction.emoji) == '4️⃣':
+                await main.clear_reactions()
+                await main.edit(embed = get_embed("단계 1-1", "단어를 입력하세요."))
+                def check(m):
+                    return m.author == auth and m.channel == chan
+                inputs = await app.wait_for('message', check = check)
+                complete += "if \"" + inputs.content.replace("\\", "\\\\").replace("\"", "\\\"") + "\" in message.content:\n"
+                await completed.edit(embed = get_embed("완성된 코드", "```py\n" + complete + "```"))
+                await inputs.delete()
+        # @(^o^)==@ @==(^o^)@
         await main.edit(embed = get_embed("단계 2", "이벤트를 골라주세요.\n" + basedict["event"]))
         await main.add_reaction('1️⃣')
         await main.add_reaction('2️⃣')
@@ -115,10 +169,12 @@ async def on_message(msg):
                 reaction, user = await app.wait_for('reaction_add', timeout = 30.0, check = check)
             except asyncio.TimeoutError:
                 await main.delete()
+                finishtool()
                 return
             else:
                 if str(reaction.emoji) == "1️⃣":
                     await main.delete()
+                    finishtool()
                     return
                 elif str(reaction.emoji) == "2️⃣":
                     await reaction.remove(auth)
@@ -131,6 +187,7 @@ async def on_message(msg):
                     await inputs.delete()
                     await real.delete()
         await main.delete()
+        finishtool()
 #############################
 def get_embed(title, description):
     embed = discord.Embed(title = title, description = description, timestamp = datetime.datetime.utcnow())
